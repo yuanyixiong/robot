@@ -1,6 +1,5 @@
 package com.organization.robot;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.crypto.Mac;
@@ -58,7 +57,7 @@ public abstract class AbstractRobot implements Robot {
                 Mac mac = Mac.getInstance("HmacSHA256");
                 mac.init(new SecretKeySpec(sign().getBytes("UTF-8"), "HmacSHA256"));
                 byte[] signData = mac.doFinal(stringToSign.getBytes("UTF-8"));
-                sign = URLEncoder.encode(new String(Base64.encodeBase64(signData)), "UTF-8");
+                sign = null;//URLEncoder.encode(new String(Base64.encodeBase64(signData)), "UTF-8");
             } catch (Exception e) {
                 e.printStackTrace();
                 System.out.println("签名加密失败");
