@@ -60,6 +60,7 @@ public abstract class AbstractRobot implements Robot {
                 sign = null;//URLEncoder.encode(new String(Base64.encodeBase64(signData)), "UTF-8");
             } catch (Exception e) {
                 e.printStackTrace();
+
                 System.out.println("签名加密失败");
             }
             url = String.format("%s?access_token=%s&timestamp=%s&sign=%s", url(), accessToken(), sign, timestamp);
