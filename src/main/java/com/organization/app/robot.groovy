@@ -60,7 +60,7 @@ if (gitblit.getBoolean(Keys.web.mountParameters, true)) {
 def commitCount = 0
 def changes = ''
 SimpleDateFormat df = new SimpleDateFormat(gitblit.getString(Keys.web.datetimestampLongFormat, '[EEEE]yyyy-MM-dd hh:mm:ss'))
-def table = { "提交者认证信息:${JGitUtils.getDisplayName(it.authorIdent)}\n提交时间:${df.format(JGitUtils.getCommitDate(it))}\n提交描述:$it.shortMessage\n提交版本信息:$commitUrl$it.id.name" }
+def table = { "认证信息：${JGitUtils.getDisplayName(it.authorIdent)}\n时间：${df.format(JGitUtils.getCommitDate(it))}\n描述：$it.shortMessage\n版本：$commitUrl$it.id.name" }
 for (command in commands) {
     def ref = command.refName
     def refType = 'branch'
@@ -75,26 +75,26 @@ for (command in commands) {
         case ReceiveCommand.Type.CREATE:
             def commits = JGitUtils.getRevLog(r, command.oldId.name, command.newId.name).reverse()
             commitCount += commits.size()
-            changes += "\n new $refType $ref created ($commits.size commits)\n"
+            changes += "new $refType $ref created ($commits.size commits)\n"
             changes += commits.collect(table)
             changes += '\n'
             break
         case ReceiveCommand.Type.UPDATE:
             def commits = JGitUtils.getRevLog(r, command.oldId.name, command.newId.name).reverse()
             commitCount += commits.size()
-            changes += "\n $ref $refType updated ($commits.size commits)\n"
+            changes += "$ref $refType updated ($commits.size commits)\n"
             changes += commits.collect(table)
             changes += '\n'
             break
         case ReceiveCommand.Type.UPDATE_NONFASTFORWARD:
             def commits = JGitUtils.getRevLog(r, command.oldId.name, command.newId.name).reverse()
             commitCount += commits.size()
-            changes += "\n $ref $refType updated [NON fast-forward] ($commits.size commits)\n"
+            changes += "$ref $refType updated [NON fast-forward] ($commits.size commits)\n"
             changes += commits.collect(table)
             changes += '\n'
             break
         case ReceiveCommand.Type.DELETE:
-            changes += "\n $ref $refType deleted\n"
+            changes += "$ref $refType deleted\n"
             break
         default:
             break
@@ -115,7 +115,7 @@ connection.setRequestMethod('POST')
 connection.doOutput = true
 connection.setRequestProperty("Content-Type", "application/json")
 def writer = new OutputStreamWriter(connection.outputStream,"utf-8")
-def content ="{\"msgtype\": \"text\",\"text\": {\"content\": \""+"提交者:$user.username\n提交数量:$commitCount\n提交版本库:$repository.name"+"$summaryUrl\n$changes"+" \"},\"at\": {\"atMobiles\": [],\"isAtAll\": false}}"
+def content ="{\"msgtype\": \"text\",\"text\": {\"content\": \""+"提交者：$user.username\n提交数量：$commitCount\n版本库：$repository.name"+"$summaryUrl\n$changes"+" \"},\"at\": {\"atMobiles\": [],\"isAtAll\": false}}"
 writer.write(content.toString())
 writer.flush()
 writer.close()
