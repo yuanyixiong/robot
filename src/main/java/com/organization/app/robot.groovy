@@ -1,3 +1,5 @@
+package com.organization.app
+
 import com.gitblit.GitBlit
 import com.gitblit.Keys
 import com.gitblit.models.RepositoryModel
@@ -114,7 +116,7 @@ r.close()
 
 def timestamp = System.currentTimeMillis();
 def secret = "SEC8ea1b9174903d0047634543b8f604421e10b68343d4991dd321aebefd675e559";
-logger.info("sign："+sign);
+logger.info("secret："+secret);
 def stringToSign = timestamp + "\n" + secret;
 def mac = Mac.getInstance("HmacSHA256");
 mac.init(new SecretKeySpec(secret.getBytes("UTF-8"), "HmacSHA256"));
