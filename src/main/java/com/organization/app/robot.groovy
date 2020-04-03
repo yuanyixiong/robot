@@ -25,12 +25,9 @@ Repository r = gitblit.getRepository(repository.name)
 
 Config config = r.getConfig()
 def mailinglist = config.getString('hooks', null, 'mailinglist')
-def emailprefix = config.getString('hooks', null, 'emailprefix')
 
 // set default values
 def toAddresses = []
-if (emailprefix == null)
-    emailprefix = '[YasinYuan]'
 
 if (mailinglist != null) {
     def addrs = mailinglist.split(/(,|\s)/)
@@ -61,11 +58,10 @@ if (gitblit.getBoolean(Keys.web.mountParameters, true)) {
     commitUrl = url + "/commit?r=$repo&h="
 }
 
-def branchBreak = '>---------------------------------------------------------------\n'
 def commitBreak = '\n\n ----\n'
 def commitCount = 0
 def changes = ''
-SimpleDateFormat df = new SimpleDateFormat(gitblit.getString(Keys.web.datetimestampLongFormat, 'EEEE, MMMM d, yyyy h:mm a z'))
+SimpleDateFormat df = new SimpleDateFormat(gitblit.getString(Keys.web.datetimestampLongFormat, '[EEEE]yyyy-MM-dd hh:mm:ss'))
 def table = { "\n ${JGitUtils.getDisplayName(it.authorIdent)}\n ${df.format(JGitUtils.getCommitDate(it))}\n\n $it.shortMessage\n\n $commitUrl$it.id.name" }
 for (command in commands) {
     def ref = command.refName
@@ -82,7 +78,7 @@ for (command in commands) {
             def commits = JGitUtils.getRevLog(r, command.oldId.name, command.newId.name).reverse()
             commitCount += commits.size()
             // new branch
-            changes += "\n$branchBreak new $refType $ref created ($commits.size commits)\n$branchBreak"
+            changes += "\n new $refType $ref created ($commits.size commits)\n"
             changes += commits.collect(table).join(commitBreak)
             changes += '\n'
             break
@@ -90,7 +86,7 @@ for (command in commands) {
             def commits = JGitUtils.getRevLog(r, command.oldId.name, command.newId.name).reverse()
             commitCount += commits.size()
             // fast-forward branch commits table
-            changes += "\n$branchBreak $ref $refType updated ($commits.size commits)\n$branchBreak"
+            changes += "\n $ref $refType updated ($commits.size commits)\n"
             changes += commits.collect(table).join(commitBreak)
             changes += '\n'
             break
@@ -98,13 +94,13 @@ for (command in commands) {
             def commits = JGitUtils.getRevLog(r, command.oldId.name, command.newId.name).reverse()
             commitCount += commits.size()
             // non-fast-forward branch commits table
-            changes += "\n$branchBreak $ref $refType updated [NON fast-forward] ($commits.size commits)\n$branchBreak"
+            changes += "\n $ref $refType updated [NON fast-forward] ($commits.size commits)\n"
             changes += commits.collect(table).join(commitBreak)
             changes += '\n'
             break
         case ReceiveCommand.Type.DELETE:
             // deleted branch/tag
-            changes += "\n$branchBreak $ref $refType deleted\n$branchBreak"
+            changes += "\n $ref $refType deleted\n"
             break
         default:
             break
@@ -130,7 +126,7 @@ connection.doOutput = true
 connection.setRequestProperty("Content-Type", "application/json")
 //connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
 def writer = new OutputStreamWriter(connection.outputStream,"utf-8")
-def content ="{\"msgtype\": \"text\",\"text\": {\"content\": \""+"$emailprefix $user.username pushed $commitCount commits => $repository.name\n"+"$summaryUrl\n$changes"+" \"},\"at\": {\"atMobiles\": [],\"isAtAll\": false}}"
+def content ="{\"msgtype\": \"text\",\"text\": {\"content\": \""+"提交者：$user.username \n提交描述：$commitCount \n 提交版本库：$repository.name"+"$summaryUrl\n$changes"+" \"},\"at\": {\"atMobiles\": [],\"isAtAll\": false}}"
 //println content.toString()
 writer.write(content.toString())
 writer.flush()
