@@ -47,14 +47,11 @@ toAddresses.addAll(repository.mailingLists)
 
 def repo = repository.name
 def summaryUrl
-def commitUrl
 if (gitblit.getBoolean(Keys.web.mountParameters, true)) {
     repo = repo.replace('/', gitblit.getString(Keys.web.forwardSlashCharacter, '/')).replace('/', '%2F')
     summaryUrl = url + "/summary/$repo"
-    commitUrl = url + "/commit/$repo/"
 } else {
     summaryUrl = url + "/summary?r=$repo"
-    commitUrl = url + "/commit?r=$repo&h="
 }
 
 def commitCount = 0
@@ -115,7 +112,7 @@ connection.setRequestMethod('POST')
 connection.doOutput = true
 connection.setRequestProperty("Content-Type", "application/json")
 def writer = new OutputStreamWriter(connection.outputStream,"utf-8")
-def content ="{\"msgtype\": \"text\",\"text\": {\"content\": \""+"提交者：$user.username\n提交数量：$commitCount\n版本库：$repository.name"+"$summaryUrl\n版本：$commitUrl$it.id\n$changes"+" \"},\"at\": {\"atMobiles\": [],\"isAtAll\": false}}"
+def content ="{\"msgtype\": \"text\",\"text\": {\"content\": \""+"提交者：$user.username\n提交数量：$commitCount\n版本库：$repository.name"+"$summaryUrl\n版本：$it.id.name\n$changes"+" \"},\"at\": {\"atMobiles\": [],\"isAtAll\": false}}"
 writer.write(content.toString())
 writer.flush()
 writer.close()
