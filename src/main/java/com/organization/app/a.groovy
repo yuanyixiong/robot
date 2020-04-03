@@ -5,6 +5,10 @@ import com.gitblit.models.TeamModel
 import com.gitblit.models.UserModel
 import com.gitblit.utils.JGitUtils
 import java.text.SimpleDateFormat
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import org.apache.commons.codec.binary.Base64;
+import java.net.URLEncoder;
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.lib.Config
 import org.eclipse.jgit.revwalk.RevCommit
@@ -107,7 +111,18 @@ for (command in commands) {
 // close the repository reference
 r.close()
 
-def connection = new URL("https://oapi.dingtalk.com/robot/send?access_token=c4af8f3307c51e593fc235db99ea24fe62f560bd7afa1b11d9d1346babbc7320").openConnection()
+
+def timestamp = System.currentTimeMillis();
+def secret = "SEC8ea1b9174903d0047634543b8f604421e10b68343d4991dd321aebefd675e559";
+System.out.println("sign："+sign);
+def stringToSign = timestamp + "\n" + secret;
+def mac = Mac.getInstance("HmacSHA256");
+mac.init(new SecretKeySpec(secret.getBytes("UTF-8"), "HmacSHA256"));
+def signData = mac.doFinal(stringToSign.getBytes("UTF-8"));
+def sign = URLEncoder.encode(new String(Base64.encodeBase64(signData)),"UTF-8");
+System.out.println("sign："+sign);
+
+def connection = new URL("https://oapi.dingtalk.com/robot/send?access_token=c4af8f3307c51e593fc235db99ea24fe62f560bd7afa1b11d9d1346babbc7320&timestamp="+timestamp+"&sign="+sign).openConnection()
 connection.setRequestMethod('POST')
 connection.doOutput = true
 connection.setRequestProperty("Content-Type", "application/json")
