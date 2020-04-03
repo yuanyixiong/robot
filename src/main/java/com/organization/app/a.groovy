@@ -1,0 +1,124 @@
+import com.gitblit.GitBlit
+import com.gitblit.Keys
+import com.gitblit.models.RepositoryModel
+import com.gitblit.models.TeamModel
+import com.gitblit.models.UserModel
+import com.gitblit.utils.JGitUtils
+import java.text.SimpleDateFormat
+import org.eclipse.jgit.lib.Repository
+import org.eclipse.jgit.lib.Config
+import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.transport.ReceiveCommand
+import org.eclipse.jgit.transport.ReceiveCommand.Result
+import org.slf4j.Logger
+
+logger.info("sendmail hook triggered by ${user.username} for ${repository.name}")
+
+
+Repository r = gitblit.getRepository(repository.name)
+
+Config config = r.getConfig()
+def mailinglist = config.getString('hooks', null, 'mailinglist')
+def emailprefix = config.getString('hooks', null, 'emailprefix')
+
+// set default values
+def toAddresses = []
+if (emailprefix == null)
+    emailprefix = '[YasinYuan]'
+
+if (mailinglist != null) {
+    def addrs = mailinglist.split(/(,|\s)/)
+    toAddresses.addAll(addrs)
+}
+
+toAddresses.addAll(gitblit.getStrings(Keys.mail.mailingLists))
+
+def teams = gitblit.getRepositoryTeams(repository)
+for (team in teams) {
+    TeamModel model = gitblit.getTeamModel(team)
+    if (model.mailingLists) {
+        toAddresses.addAll(model.mailingLists)
+    }
+}
+
+toAddresses.addAll(repository.mailingLists)
+
+def repo = repository.name
+def summaryUrl
+def commitUrl
+if (gitblit.getBoolean(Keys.web.mountParameters, true)) {
+    repo = repo.replace('/', gitblit.getString(Keys.web.forwardSlashCharacter, '/')).replace('/', '%2F')
+    summaryUrl = url + "/summary/$repo"
+    commitUrl = url + "/commit/$repo/"
+} else {
+    summaryUrl = url + "/summary?r=$repo"
+    commitUrl = url + "/commit?r=$repo&h="
+}
+
+def branchBreak = '>---------------------------------------------------------------\n'
+def commitBreak = '\n\n ----\n'
+def commitCount = 0
+def changes = ''
+SimpleDateFormat df = new SimpleDateFormat(gitblit.getString(Keys.web.datetimestampLongFormat, 'EEEE, MMMM d, yyyy h:mm a z'))
+def table = { "\n ${JGitUtils.getDisplayName(it.authorIdent)}\n ${df.format(JGitUtils.getCommitDate(it))}\n\n $it.shortMessage\n\n $commitUrl$it.id.name" }
+for (command in commands) {
+    def ref = command.refName
+    def refType = 'branch'
+    if (ref.startsWith('refs/heads/')) {
+        ref  = command.refName.substring('refs/heads/'.length())
+    } else if (ref.startsWith('refs/tags/')) {
+        ref  = command.refName.substring('refs/tags/'.length())
+        refType = 'tag'
+    }
+
+    switch (command.type) {
+        case ReceiveCommand.Type.CREATE:
+            def commits = JGitUtils.getRevLog(r, command.oldId.name, command.newId.name).reverse()
+            commitCount += commits.size()
+            // new branch
+            changes += "\n$branchBreak new $refType $ref created ($commits.size commits)\n$branchBreak"
+            changes += commits.collect(table).join(commitBreak)
+            changes += '\n'
+            break
+        case ReceiveCommand.Type.UPDATE:
+            def commits = JGitUtils.getRevLog(r, command.oldId.name, command.newId.name).reverse()
+            commitCount += commits.size()
+            // fast-forward branch commits table
+            changes += "\n$branchBreak $ref $refType updated ($commits.size commits)\n$branchBreak"
+            changes += commits.collect(table).join(commitBreak)
+            changes += '\n'
+            break
+        case ReceiveCommand.Type.UPDATE_NONFASTFORWARD:
+            def commits = JGitUtils.getRevLog(r, command.oldId.name, command.newId.name).reverse()
+            commitCount += commits.size()
+            // non-fast-forward branch commits table
+            changes += "\n$branchBreak $ref $refType updated [NON fast-forward] ($commits.size commits)\n$branchBreak"
+            changes += commits.collect(table).join(commitBreak)
+            changes += '\n'
+            break
+        case ReceiveCommand.Type.DELETE:
+            // deleted branch/tag
+            changes += "\n$branchBreak $ref $refType deleted\n$branchBreak"
+            break
+        default:
+            break
+    }
+}
+// close the repository reference
+r.close()
+
+def connection = new URL("https://oapi.dingtalk.com/robot/send?access_token=c4af8f3307c51e593fc235db99ea24fe62f560bd7afa1b11d9d1346babbc7320").openConnection()
+connection.setRequestMethod('POST')
+connection.doOutput = true
+connection.setRequestProperty("Content-Type", "application/json")
+//connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
+def writer = new OutputStreamWriter(connection.outputStream,"utf-8")
+def content ="{\"msgtype\": \"text\",\"text\": {\"content\": \""+"$emailprefix $user.username pushed $commitCount commits => $repository.name\n"+"$summaryUrl\n$changes"+" \"},\"at\": {\"atMobiles\": [],\"isAtAll\": false}}"
+//println content.toString()
+writer.write(content.toString())
+writer.flush()
+writer.close()
+connection.connect()
+
+def respText = connection.content.text
+println respText
