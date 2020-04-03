@@ -60,7 +60,7 @@ if (gitblit.getBoolean(Keys.web.mountParameters, true)) {
 def commitCount = 0
 def changes = ''
 SimpleDateFormat df = new SimpleDateFormat(gitblit.getString(Keys.web.datetimestampLongFormat, '[EEEE]yyyy-MM-dd hh:mm:ss'))
-def table = { "认证信息：${JGitUtils.getDisplayName(it.authorIdent)}\n时间：${df.format(JGitUtils.getCommitDate(it))}\n描述：$it.shortMessage\n版本：$commitUrl$it.id.name" }
+def table = { "认证信息：${JGitUtils.getDisplayName(it.authorIdent)}\n时间：${df.format(JGitUtils.getCommitDate(it))}\n描述：$it.shortMessage\n" }
 for (command in commands) {
     def ref = command.refName
     def refType = 'branch'
@@ -115,7 +115,7 @@ connection.setRequestMethod('POST')
 connection.doOutput = true
 connection.setRequestProperty("Content-Type", "application/json")
 def writer = new OutputStreamWriter(connection.outputStream,"utf-8")
-def content ="{\"msgtype\": \"text\",\"text\": {\"content\": \""+"提交者：$user.username\n提交数量：$commitCount\n版本库：$repository.name"+"$summaryUrl\n$changes"+" \"},\"at\": {\"atMobiles\": [],\"isAtAll\": false}}"
+def content ="{\"msgtype\": \"text\",\"text\": {\"content\": \""+"提交者：$user.username\n提交数量：$commitCount\n版本库：$repository.name"+"$summaryUrl\n版本：$commitUrl$it.id\n$changes"+" \"},\"at\": {\"atMobiles\": [],\"isAtAll\": false}}"
 writer.write(content.toString())
 writer.flush()
 writer.close()
