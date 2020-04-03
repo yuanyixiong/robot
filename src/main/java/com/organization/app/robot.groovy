@@ -108,7 +108,7 @@ connection.setRequestMethod('POST')
 connection.doOutput = true
 connection.setRequestProperty("Content-Type", "application/json")
 def writer = new OutputStreamWriter(connection.outputStream,"utf-8")
-def content ="{\"msgtype\": \"text\",\"text\": {\"content\": \""+"推送者：$user.username\n推送数量：$commitCount\n版本库：$repository.name"+"$summaryUrl\n$changes"+" \"},\"at\": {\"atMobiles\": [],\"isAtAll\": true}}"
+def content ="{\"msgtype\": \"text\",\"text\": {\"content\": \""+"推送者：$user.username\n推送数量：$commitCount\n版本库：$repository.name\n地址：$summaryUrl\n$changes"+" \"},\"at\": {\"atMobiles\": [],\"isAtAll\": true}}"
 writer.write(content.toString())
 writer.flush()
 writer.close()
