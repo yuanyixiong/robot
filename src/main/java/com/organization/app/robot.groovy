@@ -56,7 +56,7 @@ if (gitblit.getBoolean(Keys.web.mountParameters, true)) {
 
 def commitCount = 0
 def changes = ''
-SimpleDateFormat df = new SimpleDateFormat(gitblit.getString(Keys.web.datetimestampLongFormat, '[EEEE]yyyy-MM-dd hh:mm:ss'))
+SimpleDateFormat df = new SimpleDateFormat(gitblit.getString(Keys.web.datetimestampLongFormat, 'yyyy-MM-dd hh:mm:ss'))
 def table = { "认证信息：${JGitUtils.getDisplayName(it.authorIdent)}\n时间：${df.format(JGitUtils.getCommitDate(it))}\n描述：$it.shortMessage\n" }
 for (command in commands) {
     def ref = command.refName
